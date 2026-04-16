@@ -1,0 +1,129 @@
+================================================================================
+                  PSEUDOCODE: INFIX TO POSTFIX & PREFIX CONVERSION
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+HELPER FUNCTIONS
+────────────────────────────────────────────────────────────────────────────────
+
+FUNCTION precedence(operator):
+    IF operator is '+' OR '-'  → RETURN 1
+    IF operator is '*' OR '/'  → RETURN 2
+    IF operator is '^'         → RETURN 3
+    ELSE                       → RETURN -1
+
+FUNCTION isOperator(character):
+    RETURN true if character is one of: + - * / ^
+
+FUNCTION isOperand(character):
+    RETURN true if character is a letter or digit
+
+================================================================================
+ALGORITHM 1: INFIX TO POSTFIX
+(Based on Dijkstra's Shunting-Yard Algorithm)
+================================================================================
+
+INPUT  : infix_expression (string)
+OUTPUT : postfix_expression (string)
+
+BEGIN
+    result  ← empty string
+    stack   ← empty stack
+    Remove all spaces from infix_expression
+
+    FOR each character c in infix_expression DO:
+
+        CASE 1: c is an OPERAND (letter or digit)
+            Append c to result
+
+        CASE 2: c is '('
+            Push c onto stack
+
+        CASE 3: c is ')'
+            WHILE stack is not empty AND top of stack ≠ '(' DO
+                Pop from stack → append to result
+            END WHILE
+            Pop and discard '(' from stack
+
+        CASE 4: c is an OPERATOR
+            WHILE stack is not empty
+              AND top of stack ≠ '('
+              AND (precedence(top) > precedence(c)
+                   OR (precedence(top) = precedence(c) AND c ≠ '^')) DO
+                Pop from stack → append to result
+            END WHILE
+            Push c onto stack
+
+    END FOR
+
+    WHILE stack is not empty DO
+        Pop from stack → append to result
+    END WHILE
+
+    RETURN result
+END
+
+================================================================================
+ALGORITHM 2: INFIX TO PREFIX
+(Reverse → Postfix → Reverse Strategy)
+================================================================================
+
+INPUT  : infix_expression (string)
+OUTPUT : prefix_expression (string)
+
+BEGIN
+    Remove all spaces from infix_expression
+
+    STEP 1 — REVERSE & SWAP BRACKETS
+        reversed ← empty string
+        FOR each character c in infix_expression (right to left) DO
+            IF c = '('  → append ')' to reversed
+            IF c = ')'  → append '(' to reversed
+            ELSE        → append c   to reversed
+        END FOR
+
+    STEP 2 — APPLY POSTFIX ALGORITHM on reversed string
+        (Use Algorithm 1 with one change: '^' treated as left-associative)
+        intermediate ← InfixToPostfix(reversed)
+
+    STEP 3 — REVERSE THE RESULT
+        tokens  ← split intermediate by spaces
+        prefix  ← join tokens in reverse order
+
+    RETURN prefix
+END
+
+================================================================================
+MAIN PROGRAM
+================================================================================
+
+BEGIN
+    test_cases ← ["A+B", "A+B*C", "(A+B)*C", "A+B*C-D/E",
+                   "(A+B)*(C-D)", "A^B^C", "A*(B+C)-D/(E+F)"]
+
+    FOR each expression IN test_cases DO
+        PRINT "Infix   : " + expression
+        PRINT "Postfix : " + InfixToPostfix(expression)
+        PRINT "Prefix  : " + InfixToPrefix(expression)
+    END FOR
+END
+
+================================================================================
+OPERATOR PRECEDENCE TABLE
+================================================================================
+
+  Operator  |  Precedence  |  Associativity
+ -----------+--------------+----------------
+     ^       |     3 (High) |  Right-to-Left
+    * /       |     2 (Mid)  |  Left-to-Right
+    + -       |     1 (Low)  |  Left-to-Right
+
+================================================================================
+KEY DATA STRUCTURE: STACK (LIFO)
+================================================================================
+
+  PUSH(x) → place x on top of stack
+  POP()   → remove and return top element
+  PEEK()  → view top element without removing
+
+================================================================================
